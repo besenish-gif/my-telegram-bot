@@ -529,6 +529,29 @@ def back_to_main(call):
 
 print("🪡 Бот для тканей запущен! Работает меню с 5 типами тканей")
 
+# Добавляем простой HTTP сервер для Render
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
+
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b'Bot is running!')
+    
+    def log_message(self, format, *args):
+        pass  # Отключаем логирование запросов
+
+# Запускаем HTTP сервер в отдельном потоке
+def run_http_server():
+    server = HTTPServer(('0.0.0.0', 8000), SimpleHandler)
+    print("HTTP сервер запущен на порту 8000")
+    server.serve_forever()
+
+http_thread = threading.Thread(target=run_http_server, daemon=True)
+http_thread.start()
+
 # Основной цикл бота
 while True:
     try:
