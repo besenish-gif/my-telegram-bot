@@ -3,6 +3,22 @@ from telebot import types
 import os
 import time
 import requests
+from flask import Flask
+import threading
+
+# Flask app для обхода проверки портов
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+# Запускаем Flask СРАЗУ
+def run_flask():
+    app.run(host='0.0.0.0', port=8000, debug=False, use_reloader=False)
+
+flask_thread = threading.Thread(target=run_flask, daemon=True)
+flask_thread.start()
 
 TOKEN = os.environ.get('BOT_TOKEN') or '8478425052:AAEWtD19dGdCsGMnV2M9TJzzlAX_gl2txBs'
 bot = telebot.TeleBot(TOKEN)
@@ -528,29 +544,6 @@ def back_to_main(call):
     start_command(call)
 
 print("🪡 Бот для тканей запущен! Работает меню с 5 типами тканей")
-
-# Добавляем простой HTTP сервер для Render
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import threading
-
-class SimpleHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/plain')
-        self.end_headers()
-        self.wfile.write(b'Bot is running!')
-    
-    def log_message(self, format, *args):
-        pass  # Отключаем логирование запросов
-
-# Запускаем HTTP сервер в отдельном потоке
-def run_http_server():
-    server = HTTPServer(('0.0.0.0', 8000), SimpleHandler)
-    print("HTTP сервер запущен на порту 8000")
-    server.serve_forever()
-
-http_thread = threading.Thread(target=run_http_server, daemon=True)
-http_thread.start()
 
 # Основной цикл бота
 while True:
