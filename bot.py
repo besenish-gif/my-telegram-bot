@@ -489,7 +489,7 @@ def show_order_summary(user_id, order_data):
     markup = types.InlineKeyboardMarkup()
     btn_manager = types.InlineKeyboardButton(
         '📞 Написать менеджеру',
-        url='https://t.me/Mafia_Dubna'
+        url='https://t.me/YaShveyaRU'
     )
     btn_new_order = types.InlineKeyboardButton('🛍 Новый заказ', callback_data='show_fabric_types')
     markup.add(btn_manager)
@@ -529,12 +529,12 @@ def back_to_main(call):
 
 print("🪡 Бот для тканей запущен! Работает меню с 5 типами тканей")
 
-# Улучшенный запуск с обработкой ошибок
+# Улучшенный запуск с обработкой ошибок и переподключением
 while True:
     try:
         print("Запуск бота...")
-        bot.infinity_polling(timeout=60, long_polling_timeout=30)
+        bot.infinity_polling(timeout=60, long_polling_timeout=30, restart_on_change=True)
     except Exception as e:
-        print(f"Ошибка: {e}")
-        print("Перезапуск через 10 секунд...")
-        time.sleep(10)
+        print(f"Ошибка подключения: {e}")
+        print("Перезапуск через 30 секунд...")
+        time.sleep(30)
