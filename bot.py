@@ -1,26 +1,7 @@
 import telebot
 from telebot import types
-import os
-import time
-import requests
-from flask import Flask
-import threading
 
-# Flask app для обхода проверки портов
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "Bot is running!"
-
-# Запускаем Flask СРАЗУ
-def run_flask():
-    app.run(host='0.0.0.0', port=8000, debug=False, use_reloader=False)
-
-flask_thread = threading.Thread(target=run_flask, daemon=True)
-flask_thread.start()
-
-TOKEN = os.environ.get('BOT_TOKEN') or '8478425052:AAEWtD19dGdCsGMnV2M9TJzzlAX_gl2txBs'
+TOKEN = '8478425052:AAEWtD19dGdCsGMnV2M9TJzzlAX_gl2txBs'
 bot = telebot.TeleBot(TOKEN)
 
 # ID менеджеров для уведомлений (замени на реальные ID)
@@ -28,39 +9,16 @@ MANAGER_IDS = [500016247, 832104985]  # Узнай ID через @userinfobot
 
 # Функция отправки заказа всем менеджерам
 def send_order_to_managers(order_data):
-    # Расчет выгоды
-    full_prices = {
-        'california_viscose': 770,
-        'len_crash': 710,
-        'jersey': 1150,
-        'euro_angora': 900,
-        'lapsha': 790
-    }
-    
-    fabric_type = order_data['fabric_type']
-    full_price = full_prices.get(fabric_type, 0)
-    discount_price = order_data.get('price_per_meter', 0)
-    saved_amount = (full_price - discount_price) * order_data['quantity']
-    
     order_text = (
         f"🆕 **НОВЫЙ ЗАКАЗ!**\n\n"
         f"🧵 **Тип ткани:** {order_data['fabric_name']}\n"
         f"🎨 **Цвет:** {order_data['color']}\n"
         f"📏 **Метраж:** {order_data['quantity']} м\n"
-        f"💰 **Стоимость ткани:** {order_data.get('total_price', 0)} руб\n"
-        f"💰 **Выгода:** {saved_amount} руб\n"
-    )
-    
-    # Добавляем информацию о нитках если есть
-    if order_data.get('threads_count', 0) > 0:
-        order_text += f"🧵 **Нитки в тон:** {order_data['threads_count']} шт (+{order_data.get('threads_price', 0)} руб)\n"
-    
-    order_text += (
+        f"💰 **Стоимость:** {order_data.get('total_price', 0)} руб\n"
         f"👤 **ФИО:** {order_data['fio']}\n"
         f"📱 **Телефон:** {order_data['phone']}\n"
         f"📍 **ПВЗ СДЭК:** {order_data['address']}\n"
-        f"👤 **ID клиента:** {order_data.get('user_id', 'Неизвестно')}\n\n"
-        f"🚚 **Доставка рассчитывается индивидуально**"
+        f"👤 **ID клиента:** {order_data.get('user_id', 'Неизвестно')}"
     )
 
     # Простая кнопка для связи с клиентом
@@ -151,17 +109,7 @@ def send_fabric_post(call):
         'lapsha': 'Лапша'
     }
 
-    # Цены (новая цена)
-    prices = {
-        'california_viscose': 616,
-        'len_crash': 604,
-        'jersey': 978,
-        'euro_angora': 720,
-        'lapsha': 632
-    }
-
     fabric_name = fabric_names.get(fabric_type, 'ткани')
-    current_price = prices.get(fabric_type, 0)
 
     # СОЗДАЕМ КНОПКУ "ЗАКАЗАТЬ"
     markup = types.InlineKeyboardMarkup()
@@ -172,21 +120,14 @@ def send_fabric_post(call):
     markup.add(btn_post, btn_order)  # Две кнопки в одном ряду
     markup.add(btn_back)
 
-    price_text = (
-        f"🎊 {fabric_name.upper()} 🎊\n\n"
-        f"💰 Цена: {current_price} руб/м\n\n"
-        f"✨ Отрезы готовы к просмотру!\n\n"
-        f"Вы можете посмотреть отрезы в канале или сразу оформить заказ:"
-    )
-
     bot.edit_message_text(
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
-        text=price_text,
+        text=f"🎊 {fabric_name.upper()} 🎊\n\n✨ Отрезы готовы к просмотру!\n\nВы можете посмотреть отрезы в канале или сразу оформить заказ:",
         reply_markup=markup
     )
 
-# Хранилище для данных заказа
+   # Хранилище для данных заказа
 user_orders = {}
 
 # НОВЫЙ умный обработчик для кнопки "Заказать"
@@ -223,7 +164,7 @@ def handle_order(call):
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
         text=f"🛒 **ОФОРМЛЕНИЕ ЗАКАЗА**\n\n"
-             f"🧵 **Шаг 1 из 7:** Выбранная ткань: **{fabric_name.upper()}**\n\n"
+             f"🧵 **Шаг 1 из 6:** Выбранная ткань: **{fabric_name.upper()}**\n\n"
              f"Подтвердите выбор ткани или выберите другую:",
         reply_markup=markup,
         parse_mode='Markdown'
@@ -249,7 +190,7 @@ def confirm_fabric(call):
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
         text=f"🛒 **ОФОРМЛЕНИЕ ЗАКАЗА: {order_data['fabric_name'].upper()}**\n\n"
-             f"🎨 **Шаг 2 из 7:** Какой цвет ткани вас интересует?\n"
+             f"🎨 **Шаг 2 из 6:** Какой цвет ткани вас интересует?\n"
              f"(опишите желаемый цвет)",
         reply_markup=markup,
         parse_mode='Markdown'
@@ -272,21 +213,12 @@ def handle_order_responses(message):
     markup.add(btn_cancel)
 
     if current_step == 'color':
-        # Проверяем, что введен текст, а не число
-        if message.text.replace('.', '').replace(',', '').isdigit():
-            bot.send_message(
-                user_id,
-                "❌ Пожалуйста, опишите цвет ткани словами (например: 'голубой', 'бежевый', 'в полоску'):",
-                reply_markup=markup
-            )
-            return
-            
         order_data['color'] = message.text
         order_data['step'] = 'quantity'
 
         bot.send_message(
             user_id,
-            f"📏 **Шаг 3 из 7:** Укажите желаемый метраж:\n"
+            f"📏 **Шаг 3 из 6:** Укажите желаемый метраж:\n"
             f"(например: 2.5 или 3)",
             reply_markup=markup,
             parse_mode='Markdown'
@@ -300,19 +232,12 @@ def handle_order_responses(message):
                 raise ValueError
 
             order_data['quantity'] = quantity
-            order_data['step'] = 'threads'
-
-            # Спрашиваем про нитки
-            markup_threads = types.InlineKeyboardMarkup()
-            btn_yes_threads = types.InlineKeyboardButton('✅ Да', callback_data='threads_yes')
-            btn_no_threads = types.InlineKeyboardButton('❌ Нет', callback_data='threads_no')
-            markup_threads.add(btn_yes_threads, btn_no_threads)
-            markup_threads.add(btn_cancel)
+            order_data['step'] = 'fio'
 
             bot.send_message(
                 user_id,
-                f"🧵 **Шаг 4 из 7:** Нужны ли нитки в тон? (50 руб/кат.)",
-                reply_markup=markup_threads,
+                f"👤 **Шаг 4 из 6:** Ваше ФИО (полностью):",
+                reply_markup=markup,
                 parse_mode='Markdown'
             )
 
@@ -329,7 +254,7 @@ def handle_order_responses(message):
 
         bot.send_message(
             user_id,
-            f"📱 **Шаг 6 из 7:** Ваш контактный телефон:",
+            f"📱 **Шаг 5 из 6:** Ваш контактный телефон:",
             reply_markup=markup,
             parse_mode='Markdown'
         )
@@ -350,7 +275,7 @@ def handle_order_responses(message):
 
         bot.send_message(
             user_id,
-            f"📍 **Шаг 7 из 7:** Адрес удобного пункта выдачи СДЭК:\n"
+            f"📍 **Шаг 6 из 6:** Адрес удобного пункта выдачи СДЭК:\n"
             f"(город, улица, номер пункта)",
             reply_markup=markup,
             parse_mode='Markdown'
@@ -363,138 +288,35 @@ def handle_order_responses(message):
         # Заказ завершен - показываем итог
         show_order_summary(user_id, order_data)
 
-# Обработчик для ниток
-@bot.callback_query_handler(func=lambda call: call.data in ['threads_yes', 'threads_no'])
-def handle_threads(call):
-    user_id = call.from_user.id
-    order_data = user_orders.get(user_id)
-
-    if not order_data:
-        return
-
-    if call.data == 'threads_yes':
-        order_data['step'] = 'threads_count'
-        
-        markup = types.InlineKeyboardMarkup()
-        btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
-        markup.add(btn_cancel)
-
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            text=f"🧵 **Шаг 5 из 7:** Сколько катушек ниток нужно?\n"
-                 f"(цена: 50 руб/кат.)",
-            reply_markup=markup,
-            parse_mode='Markdown'
-        )
-    else:
-        order_data['threads_count'] = 0
-        order_data['threads_price'] = 0
-        order_data['step'] = 'fio'
-        
-        markup = types.InlineKeyboardMarkup()
-        btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
-        markup.add(btn_cancel)
-
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            text=f"👤 **Шаг 6 из 7:** Ваше ФИО (полностью):",
-            reply_markup=markup,
-            parse_mode='Markdown'
-        )
-
-# Обработчик для количества ниток
-@bot.message_handler(func=lambda message: message.from_user.id in user_orders and user_orders.get(message.from_user.id, {}).get('step') == 'threads_count')
-def handle_threads_count(message):
-    user_id = message.from_user.id
-    order_data = user_orders.get(user_id)
-
-    if not order_data:
-        return
-
-    try:
-        threads_count = int(message.text)
-        if threads_count < 0:
-            raise ValueError
-
-        order_data['threads_count'] = threads_count
-        order_data['threads_price'] = threads_count * 50
-        order_data['step'] = 'fio'
-        
-        markup = types.InlineKeyboardMarkup()
-        btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
-        markup.add(btn_cancel)
-
-        bot.send_message(
-            user_id,
-            f"👤 **Шаг 6 из 7:** Ваше ФИО (полностью):",
-            reply_markup=markup,
-            parse_mode='Markdown'
-        )
-
-    except ValueError:
-        markup = types.InlineKeyboardMarkup()
-        btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
-        markup.add(btn_cancel)
-
-        bot.send_message(
-            user_id,
-            "❌ Пожалуйста, введите корректное число катушек:",
-            reply_markup=markup
-        )
-
 # Функция показа итогов заказа
 def show_order_summary(user_id, order_data):
-    # Цены (новая цена / старая цена)
+    # Расчет стоимости
     prices = {
-        'california_viscose': (616, 770),
-        'len_crash': (604, 710),
-        'jersey': (978, 1150),
-        'euro_angora': (720, 900),
-        'lapsha': (632, 790)
+        'california_viscose': 890,
+        'len_crash': 950,
+        'jersey': 750,
+        'euro_angora': 1200,
+        'lapsha': 680
     }
 
-    fabric_type = order_data['fabric_type']
-    price_per_meter, old_price = prices.get(fabric_type, (0, 0))
-    order_data['price_per_meter'] = price_per_meter
-    
-    total_fabric_price = price_per_meter * order_data['quantity']
-    threads_price = order_data.get('threads_price', 0)
-    total_price = total_fabric_price + threads_price
-    
+    price_per_meter = prices.get(order_data['fabric_type'], 800)
+    total_price = price_per_meter * order_data['quantity']
     order_data['total_price'] = total_price
     order_data['user_id'] = user_id
-
-    # Расчет выгоды
-    saved_per_meter = old_price - price_per_meter
-    total_saved = saved_per_meter * order_data['quantity']
 
     # Отправляем заказ всем менеджерам
     send_success = send_order_to_managers(order_data)
 
-    # Формируем текст для клиента
+    # Убираем Markdown разметку для клиента
     summary_text = (
         f"✅ ЗАКАЗ ОФОРМЛЕН!\n\n"
-        f"🧵 **Тип ткани:** {order_data['fabric_name']}\n"
-        f"🎨 **Цвет:** {order_data['color']}\n"
-        f"📏 **Метраж:** {order_data['quantity']} м\n"
-        f"💰 **Цена:** {price_per_meter} руб/м\n"
-        f"💰 **Полная цена:** ~~{old_price} руб/м~~\n"
-        f"🔥 **Ваша выгода:** {total_saved} руб!\n"
-        f"💵 **Стоимость ткани:** {total_fabric_price} руб\n"
-    )
-    
-    # Добавляем информацию о нитках если есть
-    if order_data.get('threads_count', 0) > 0:
-        summary_text += f"🧵 **Нитки в тон:** {order_data['threads_count']} шт (+{threads_price} руб)\n"
-    
-    summary_text += (
-        f"💎 **ИТОГО:** {total_price} руб\n\n"
-        f"👤 **ФИО:** {order_data['fio']}\n"
-        f"📱 **Телефон:** {order_data['phone']}\n"
-        f"📍 **ПВЗ СДЭК:** {order_data['address']}\n\n"
-        f"🚚 *Доставка рассчитывается индивидуально*\n\n"
+        f"🧵 Тип ткани: {order_data['fabric_name']}\n"
+        f"🎨 Цвет: {order_data['color']}\n"
+        f"📏 Метраж: {order_data['quantity']} м\n"
+        f"💰 Стоимость: {total_price} руб\n"
+        f"👤 ФИО: {order_data['fio']}\n"
+        f"📱 Телефон: {order_data['phone']}\n"
+        f"📍 ПВЗ СДЭК: {order_data['address']}\n\n"
     )
 
     if send_success:
@@ -514,8 +336,8 @@ def show_order_summary(user_id, order_data):
     bot.send_message(
         user_id,
         summary_text,
-        reply_markup=markup,
-        parse_mode='Markdown'
+        reply_markup=markup
+        # Убираем parse_mode='Markdown'
     )
 
     # Очищаем данные заказа
@@ -544,13 +366,4 @@ def back_to_main(call):
     start_command(call)
 
 print("🪡 Бот для тканей запущен! Работает меню с 5 типами тканей")
-
-# Основной цикл бота
-while True:
-    try:
-        print("Запуск Telegram бота...")
-        bot.infinity_polling(timeout=60, long_polling_timeout=30, restart_on_change=True)
-    except Exception as e:
-        print(f"Ошибка: {e}")
-        print("Перезапуск через 30 секунд...")
-        time.sleep(30)
+bot.infinity_polling()
