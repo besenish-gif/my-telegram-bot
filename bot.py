@@ -3,14 +3,6 @@ from telebot import types
 import os
 import time
 import requests
-from flask import Flask
-
-# Создаем Flask app для обхода проверки портов
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "Bot is running!"
 
 TOKEN = os.environ.get('BOT_TOKEN') or '8478425052:AAEWtD19dGdCsGMnV2M9TJzzlAX_gl2txBs'
 bot = telebot.TeleBot(TOKEN)
@@ -536,14 +528,6 @@ def back_to_main(call):
     start_command(call)
 
 print("🪡 Бот для тканей запущен! Работает меню с 5 типами тканей")
-
-# Запускаем Flask в отдельном потоке
-def run_flask():
-    app.run(host='0.0.0.0', port=8000, debug=False)
-
-import threading
-flask_thread = threading.Thread(target=run_flask, daemon=True)
-flask_thread.start()
 
 # Основной цикл бота
 while True:
