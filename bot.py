@@ -357,7 +357,7 @@ def handle_threads(call):
         return
 
     if call.data == 'threads_yes':
-        order_data['step'] = 'threads_count'
+        order_data['step'] = 'threads_count'  # Устанавливаем правильный шаг
         
         markup = types.InlineKeyboardMarkup()
         btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
@@ -374,7 +374,7 @@ def handle_threads(call):
     else:
         order_data['threads_count'] = 0
         order_data['threads_price'] = 0
-        order_data['step'] = 'fio'
+        order_data['step'] = 'fio'  # Переходим к ФИО
         
         markup = types.InlineKeyboardMarkup()
         btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
@@ -404,7 +404,7 @@ def handle_threads_count(message):
 
         order_data['threads_count'] = threads_count
         order_data['threads_price'] = threads_count * 50
-        order_data['step'] = 'fio'
+        order_data['step'] = 'fio'  # Переходим к ФИО
         
         markup = types.InlineKeyboardMarkup()
         btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
