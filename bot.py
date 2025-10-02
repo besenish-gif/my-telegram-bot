@@ -39,11 +39,6 @@ def send_order_to_managers(order_data):
     if order_data.get('threads_count', 0) > 0:
         order_text += f"🧵 **Нитки в тон:** {order_data['threads_count']} шт (+{order_data.get('threads_price', 0)} руб)\n"
     
-    # Добавляем информацию об иглах если есть
-    if order_data.get('needles'):
-        needles_text = ", ".join(order_data['needles'])
-        order_text += f"📌 **Иглы:** {needles_text}\n"
-    
     order_text += (
         f"👤 **ФИО:** {order_data['fio']}\n"
         f"📱 **Телефон:** {order_data['phone']}\n"
@@ -140,18 +135,17 @@ def send_fabric_post(call):
         'lapsha': 'Лапша'
     }
 
-    # Цены (новая цена / старая цена)
+    # Цены (новая цена)
     prices = {
-        'california_viscose': (616, 770),
-        'len_crash': (604, 710),
-        'jersey': (978, 1150),
-        'euro_angora': (720, 900),
-        'lapsha': (632, 790)
+        'california_viscose': 616,
+        'len_crash': 604,
+        'jersey': 978,
+        'euro_angora': 720,
+        'lapsha': 632
     }
 
     fabric_name = fabric_names.get(fabric_type, 'ткани')
-    current_price, old_price = prices.get(fabric_type, (0, 0))
-    discount = old_price - current_price
+    current_price = prices.get(fabric_type, 0)
 
     # СОЗДАЕМ КНОПКУ "ЗАКАЗАТЬ"
     markup = types.InlineKeyboardMarkup()
@@ -164,8 +158,7 @@ def send_fabric_post(call):
 
     price_text = (
         f"🎊 {fabric_name.upper()} 🎊\n\n"
-        f"💰 Цена: {current_price} руб/м\n"
-        f"~~{old_price} руб/м~~ 🔥 Экономия {discount} руб/м!\n\n"
+        f"💰 Цена: {current_price} руб/м\n\n"
         f"✨ Отрезы готовы к просмотру!\n\n"
         f"Вы можете посмотреть отрезы в канале или сразу оформить заказ:"
     )
@@ -174,8 +167,7 @@ def send_fabric_post(call):
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
         text=price_text,
-        reply_markup=markup,
-        parse_mode='Markdown'
+        reply_markup=markup
     )
 
 # Хранилище для данных заказа
@@ -215,7 +207,7 @@ def handle_order(call):
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
         text=f"🛒 **ОФОРМЛЕНИЕ ЗАКАЗА**\n\n"
-             f"🧵 **Шаг 1 из 8:** Выбранная ткань: **{fabric_name.upper()}**\n\n"
+             f"🧵 **Шаг 1 из 7:** Выбранная ткань: **{fabric_name.upper()}**\n\n"
              f"Подтвердите выбор ткани или выберите другую:",
         reply_markup=markup,
         parse_mode='Markdown'
@@ -241,7 +233,7 @@ def confirm_fabric(call):
         chat_id=call.message.chat.id,
         message_id=call.message.message_id,
         text=f"🛒 **ОФОРМЛЕНИЕ ЗАКАЗА: {order_data['fabric_name'].upper()}**\n\n"
-             f"🎨 **Шаг 2 из 8:** Какой цвет ткани вас интересует?\n"
+             f"🎨 **Шаг 2 из 7:** Какой цвет ткани вас интересует?\n"
              f"(опишите желаемый цвет)",
         reply_markup=markup,
         parse_mode='Markdown'
@@ -264,12 +256,21 @@ def handle_order_responses(message):
     markup.add(btn_cancel)
 
     if current_step == 'color':
+        # Проверяем, что введен текст, а не число
+        if message.text.replace('.', '').replace(',', '').isdigit():
+            bot.send_message(
+                user_id,
+                "❌ Пожалуйста, опишите цвет ткани словами (например: 'голубой', 'бежевый', 'в полоску'):",
+                reply_markup=markup
+            )
+            return
+            
         order_data['color'] = message.text
         order_data['step'] = 'quantity'
 
         bot.send_message(
             user_id,
-            f"📏 **Шаг 3 из 8:** Укажите желаемый метраж:\n"
+            f"📏 **Шаг 3 из 7:** Укажите желаемый метраж:\n"
             f"(например: 2.5 или 3)",
             reply_markup=markup,
             parse_mode='Markdown'
@@ -294,7 +295,7 @@ def handle_order_responses(message):
 
             bot.send_message(
                 user_id,
-                f"🧵 **Шаг 4 из 8:** Нужны ли нитки в тон? (50 руб/кат.)",
+                f"🧵 **Шаг 4 из 7:** Нужны ли нитки в тон? (50 руб/кат.)",
                 reply_markup=markup_threads,
                 parse_mode='Markdown'
             )
@@ -312,7 +313,7 @@ def handle_order_responses(message):
 
         bot.send_message(
             user_id,
-            f"📱 **Шаг 7 из 8:** Ваш контактный телефон:",
+            f"📱 **Шаг 6 из 7:** Ваш контактный телефон:",
             reply_markup=markup,
             parse_mode='Markdown'
         )
@@ -333,7 +334,7 @@ def handle_order_responses(message):
 
         bot.send_message(
             user_id,
-            f"📍 **Шаг 8 из 8:** Адрес удобного пункта выдачи СДЭК:\n"
+            f"📍 **Шаг 7 из 7:** Адрес удобного пункта выдачи СДЭК:\n"
             f"(город, улица, номер пункта)",
             reply_markup=markup,
             parse_mode='Markdown'
@@ -365,7 +366,7 @@ def handle_threads(call):
         bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text=f"🧵 **Шаг 5 из 8:** Сколько катушек ниток нужно?\n"
+            text=f"🧵 **Шаг 5 из 7:** Сколько катушек ниток нужно?\n"
                  f"(цена: 50 руб/кат.)",
             reply_markup=markup,
             parse_mode='Markdown'
@@ -373,8 +374,19 @@ def handle_threads(call):
     else:
         order_data['threads_count'] = 0
         order_data['threads_price'] = 0
-        order_data['step'] = 'needles'
-        ask_about_needles(user_id, order_data)
+        order_data['step'] = 'fio'
+        
+        markup = types.InlineKeyboardMarkup()
+        btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
+        markup.add(btn_cancel)
+
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            text=f"👤 **Шаг 6 из 7:** Ваше ФИО (полностью):",
+            reply_markup=markup,
+            parse_mode='Markdown'
+        )
 
 # Обработчик для количества ниток
 @bot.message_handler(func=lambda message: message.from_user.id in user_orders and user_orders.get(message.from_user.id, {}).get('step') == 'threads_count')
@@ -392,9 +404,18 @@ def handle_threads_count(message):
 
         order_data['threads_count'] = threads_count
         order_data['threads_price'] = threads_count * 50
-        order_data['step'] = 'needles'
+        order_data['step'] = 'fio'
         
-        ask_about_needles(user_id, order_data)
+        markup = types.InlineKeyboardMarkup()
+        btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
+        markup.add(btn_cancel)
+
+        bot.send_message(
+            user_id,
+            f"👤 **Шаг 6 из 7:** Ваше ФИО (полностью):",
+            reply_markup=markup,
+            parse_mode='Markdown'
+        )
 
     except ValueError:
         markup = types.InlineKeyboardMarkup()
@@ -404,99 +425,6 @@ def handle_threads_count(message):
         bot.send_message(
             user_id,
             "❌ Пожалуйста, введите корректное число катушек:",
-            reply_markup=markup
-        )
-
-# Функция для вопроса об иглах
-def ask_about_needles(user_id, order_data):
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_needle1 = types.InlineKeyboardButton('📌 Иглы для трикотажа', callback_data='needle_trikotazh')
-    btn_needle2 = types.InlineKeyboardButton('📌 Иглы-стрейч (микротекс)', callback_data='needle_stretch')
-    btn_needle3 = types.InlineKeyboardButton('📌 Острые иглы', callback_data='needle_sharp')
-    btn_needle4 = types.InlineKeyboardButton('📌 Двойные иглы', callback_data='needle_double')
-    btn_none = types.InlineKeyboardButton('❌ Не нужно игл', callback_data='needle_none')
-    btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
-    
-    markup.add(btn_needle1, btn_needle2, btn_needle3, btn_needle4, btn_none, btn_cancel)
-
-    bot.send_message(
-        user_id,
-        f"📌 **Шаг 6 из 8:** Нужны ли иглы?\n"
-        f"(выберите один или несколько вариантов, затем нажмите 'Готово')",
-        reply_markup=markup
-    )
-
-# Обработчик для игл
-@bot.callback_query_handler(func=lambda call: call.data.startswith('needle_'))
-def handle_needles(call):
-    user_id = call.from_user.id
-    order_data = user_orders.get(user_id)
-
-    if not order_data:
-        return
-
-    if 'needles' not in order_data:
-        order_data['needles'] = []
-
-    needle_types = {
-        'needle_trikotazh': 'Иглы для трикотажа',
-        'needle_stretch': 'Иглы-стрейч (микротекс)',
-        'needle_sharp': 'Острые иглы',
-        'needle_double': 'Двойные иглы'
-    }
-
-    if call.data == 'needle_none':
-        order_data['step'] = 'fio'
-        
-        markup = types.InlineKeyboardMarkup()
-        btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
-        markup.add(btn_cancel)
-
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            text=f"👤 **Шаг 7 из 8:** Ваше ФИО (полностью):",
-            reply_markup=markup,
-            parse_mode='Markdown'
-        )
-    else:
-        needle_name = needle_types[call.data]
-        if needle_name in order_data['needles']:
-            order_data['needles'].remove(needle_name)
-        else:
-            order_data['needles'].append(needle_name)
-
-        # Обновляем сообщение с текущим выбором
-        current_needles = ", ".join(order_data['needles']) if order_data['needles'] else "не выбрано"
-        
-        markup = types.InlineKeyboardMarkup(row_width=1)
-        btn_needle1 = types.InlineKeyboardButton(
-            '✅ Иглы для трикотажа' if 'Иглы для трикотажа' in order_data['needles'] else '📌 Иглы для трикотажа', 
-            callback_data='needle_trikotazh'
-        )
-        btn_needle2 = types.InlineKeyboardButton(
-            '✅ Иглы-стрейч (микротекс)' if 'Иглы-стрейч (микротекс)' in order_data['needles'] else '📌 Иглы-стрейч (микротекс)', 
-            callback_data='needle_stretch'
-        )
-        btn_needle3 = types.InlineKeyboardButton(
-            '✅ Острые иглы' if 'Острые иглы' in order_data['needles'] else '📌 Острые иглы', 
-            callback_data='needle_sharp'
-        )
-        btn_needle4 = types.InlineKeyboardButton(
-            '✅ Двойные иглы' if 'Двойные иглы' in order_data['needles'] else '📌 Двойные иглы', 
-            callback_data='needle_double'
-        )
-        btn_done = types.InlineKeyboardButton('✅ Готово', callback_data='needle_none')
-        btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
-        
-        markup.add(btn_needle1, btn_needle2, btn_needle3, btn_needle4, btn_done, btn_cancel)
-
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            text=f"📌 **Шаг 6 из 8:** Нужны ли иглы?\n"
-                 f"Выбрано: {current_needles}\n\n"
-                 f"Выберите нужные иглы и нажмите 'Готово':",
             reply_markup=markup
         )
 
@@ -544,11 +472,6 @@ def show_order_summary(user_id, order_data):
     # Добавляем информацию о нитках если есть
     if order_data.get('threads_count', 0) > 0:
         summary_text += f"🧵 **Нитки в тон:** {order_data['threads_count']} шт (+{threads_price} руб)\n"
-    
-    # Добавляем информацию об иглах если есть
-    if order_data.get('needles'):
-        needles_text = ", ".join(order_data['needles'])
-        summary_text += f"📌 **Иглы:** {needles_text}\n"
     
     summary_text += (
         f"💎 **ИТОГО:** {total_price} руб\n\n"
