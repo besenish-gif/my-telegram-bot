@@ -3,6 +3,14 @@ from telebot import types
 import os
 import time
 import requests
+from flask import Flask
+
+# Создаем Flask app для обхода проверки портов
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
 
 TOKEN = os.environ.get('BOT_TOKEN') or '8478425052:AAEWtD19dGdCsGMnV2M9TJzzlAX_gl2txBs'
 bot = telebot.TeleBot(TOKEN)
@@ -357,7 +365,7 @@ def handle_threads(call):
         return
 
     if call.data == 'threads_yes':
-        order_data['step'] = 'threads_count'  # Устанавливаем правильный шаг
+        order_data['step'] = 'threads_count'
         
         markup = types.InlineKeyboardMarkup()
         btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
@@ -374,7 +382,7 @@ def handle_threads(call):
     else:
         order_data['threads_count'] = 0
         order_data['threads_price'] = 0
-        order_data['step'] = 'fio'  # Переходим к ФИО
+        order_data['step'] = 'fio'
         
         markup = types.InlineKeyboardMarkup()
         btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
@@ -404,7 +412,7 @@ def handle_threads_count(message):
 
         order_data['threads_count'] = threads_count
         order_data['threads_price'] = threads_count * 50
-        order_data['step'] = 'fio'  # Переходим к ФИО
+        order_data['step'] = 'fio'
         
         markup = types.InlineKeyboardMarkup()
         btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
@@ -489,7 +497,7 @@ def show_order_summary(user_id, order_data):
     markup = types.InlineKeyboardMarkup()
     btn_manager = types.InlineKeyboardButton(
         '📞 Написать менеджеру',
-        url='https://t.me/YaShveyaRU'
+        url='https://t.me/Mafia_Dubna'
     )
     btn_new_order = types.InlineKeyboardButton('🛍 Новый заказ', callback_data='show_fabric_types')
     markup.add(btn_manager)
@@ -529,12 +537,20 @@ def back_to_main(call):
 
 print("🪡 Бот для тканей запущен! Работает меню с 5 типами тканей")
 
-# Улучшенный запуск с обработкой ошибок и переподключением
+# Запускаем Flask в отдельном потоке
+def run_flask():
+    app.run(host='0.0.0.0', port=8000, debug=False)
+
+import threading
+flask_thread = threading.Thread(target=run_flask, daemon=True)
+flask_thread.start()
+
+# Основной цикл бота
 while True:
     try:
-        print("Запуск бота...")
+        print("Запуск Telegram бота...")
         bot.infinity_polling(timeout=60, long_polling_timeout=30, restart_on_change=True)
     except Exception as e:
-        print(f"Ошибка подключения: {e}")
+        print(f"Ошибка: {e}")
         print("Перезапуск через 30 секунд...")
         time.sleep(30)
