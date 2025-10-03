@@ -257,7 +257,7 @@ def handle_order_responses(message):
             parse_mode='Markdown'
         )
 
-    elif current_step == 'quantity':
+  elif current_step == 'quantity':
     # Проверяем, что ввели число
     try:
         quantity = float(message.text.replace(',', '.'))
@@ -289,12 +289,6 @@ def handle_order_responses(message):
             "❌ Пожалуйста, введите корректное число (например: 2.5 или 3):",
             reply_markup=markup
         )
-        except ValueError:
-            bot.send_message(
-                user_id,
-                "❌ Пожалуйста, введите корректное число (например: 2.5 или 3):",
-                reply_markup=markup
-            )
 
     elif current_step == 'fio':
         order_data['fio'] = message.text
@@ -349,6 +343,8 @@ def show_order_summary(user_id, order_data):
 
     price_per_meter = prices.get(order_data['fabric_type'], 800)
     total_price = price_per_meter * order_data['quantity']
+    # ДОБАВЛЯЕМ СТОИМОСТЬ НИТОЧЕК
+    total_price += order_data.get('threads_price', 0)
     order_data['total_price'] = total_price
     order_data['user_id'] = user_id
 
@@ -361,6 +357,7 @@ def show_order_summary(user_id, order_data):
         f"🧵 Тип ткани: {order_data['fabric_name']}\n"
         f"🎨 Цвет: {order_data['color']}\n"
         f"📏 Метраж: {order_data['quantity']} м\n"
+        f"🪡 Ниточки: {order_data.get('threads', 'Нет')}\n"
         f"💰 Стоимость: {total_price} руб\n"
         f"👤 ФИО: {order_data['fio']}\n"
         f"📱 Телефон: {order_data['phone']}\n"
