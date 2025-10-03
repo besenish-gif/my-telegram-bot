@@ -292,11 +292,11 @@ def handle_order_responses(message):
 def show_order_summary(user_id, order_data):
     # Расчет стоимости
     prices = {
-        'california_viscose': 890,
-        'len_crash': 950,
-        'jersey': 750,
-        'euro_angora': 1200,
-        'lapsha': 680
+        'california_viscose': 616,
+        'len_crash': 604,
+        'jersey': 978,
+        'euro_angora': 765,
+        'lapsha': 632
     }
 
     price_per_meter = prices.get(order_data['fabric_type'], 800)
@@ -327,7 +327,7 @@ def show_order_summary(user_id, order_data):
     markup = types.InlineKeyboardMarkup()
     btn_manager = types.InlineKeyboardButton(
         '📞 Написать менеджеру',
-        url='https://t.me/Mafia_Dubna'
+        url='https://t.me/YaShveyaRU'
     )
     btn_new_order = types.InlineKeyboardButton('🛍 Новый заказ', callback_data='show_fabric_types')
     markup.add(btn_manager)
