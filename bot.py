@@ -196,6 +196,39 @@ def confirm_fabric(call):
         parse_mode='Markdown'
     )
 
+# НОВЫЙ обработчик для ниточек
+@bot.callback_query_handler(func=lambda call: call.data.startswith('threads_'))
+def handle_threads_selection(call):
+    user_id = call.from_user.id
+    order_data = user_orders.get(user_id)
+
+    if not order_data:
+        return
+
+    if call.data == 'threads_yes':
+        order_data['threads'] = 'Да'
+        order_data['threads_price'] = 50
+        response_text = "✅ Ниточки добавлены к заказу (+50 руб)"
+    else:
+        order_data['threads'] = 'Нет' 
+        order_data['threads_price'] = 0
+        response_text = "❌ Ниточки не выбраны"
+
+    order_data['step'] = 'fio'
+
+    markup = types.InlineKeyboardMarkup()
+    btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
+    markup.add(btn_cancel)
+
+    bot.edit_message_text(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        text=f"{response_text}\n\n"
+             f"👤 **Шаг 5 из 7:** Ваше ФИО (полностью):",
+        reply_markup=markup,
+        parse_mode='Markdown'
+    )
+
 # Обработчик ответов пользователя
 @bot.message_handler(func=lambda message: message.from_user.id in user_orders)
 def handle_order_responses(message):
@@ -225,22 +258,37 @@ def handle_order_responses(message):
         )
 
     elif current_step == 'quantity':
-        # Проверяем, что ввели число
-        try:
-            quantity = float(message.text.replace(',', '.'))
-            if quantity <= 0:
-                raise ValueError
+    # Проверяем, что ввели число
+    try:
+        quantity = float(message.text.replace(',', '.'))
+        if quantity <= 0:
+            raise ValueError
 
-            order_data['quantity'] = quantity
-            order_data['step'] = 'fio'
+        order_data['quantity'] = quantity
+        order_data['step'] = 'threads'  # ← НОВЫЙ ШАГ: ниточки
 
-            bot.send_message(
-                user_id,
-                f"👤 **Шаг 4 из 6:** Ваше ФИО (полностью):",
-                reply_markup=markup,
-                parse_mode='Markdown'
-            )
+        # Создаем кнопки для ниточек
+        markup_threads = types.InlineKeyboardMarkup()
+        btn_yes = types.InlineKeyboardButton('✅ Да, подобрать ниточки', callback_data='threads_yes')
+        btn_no = types.InlineKeyboardButton('❌ Нет, спасибо', callback_data='threads_no')
+        btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
+        markup_threads.add(btn_yes, btn_no)
+        markup_threads.add(btn_cancel)
 
+        bot.send_message(
+            user_id,
+            f"🪡 **Шаг 4 из 7:** Хотите подобрать ниточки в тон?\n"
+            f"💰 Стоимость: 50 руб/катушка",
+            reply_markup=markup_threads,
+            parse_mode='Markdown'
+        )
+
+    except ValueError:
+        bot.send_message(
+            user_id,
+            "❌ Пожалуйста, введите корректное число (например: 2.5 или 3):",
+            reply_markup=markup
+        )
         except ValueError:
             bot.send_message(
                 user_id,
