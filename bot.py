@@ -366,27 +366,14 @@ def back_to_main(call):
     start_command(call)
 
 print("🪡 Бот для тканей запущен! Работает меню с 5 типами тканей")
+
 import os
-from flask import Flask
-import threading
-
-# Создаем простой веб-сервер для Render
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "✅ Тканевый бот работает!"
-
-def run_web_server():
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
 
 if __name__ == '__main__':
-    # Запускаем веб-сервер в фоне
-    web_thread = threading.Thread(target=run_web_server)
-    web_thread.daemon = True
-    web_thread.start()
+    print("🚀 Запуск бота...")
     
-    # Запускаем вашего бота
-    print("🪡 Бот для тканей запущен! Работает меню с 5 типами тканей")
-    bot.infinity_polling()
+    try:
+        # Просто запускаем бота
+        bot.infinity_polling()
+    except Exception as e:
+        print(f"❌ Ошибка: {e}")
