@@ -257,39 +257,38 @@ def handle_order_responses(message):
             parse_mode='Markdown'
         )
 
-  elif current_step == 'quantity':
-    # Проверяем, что ввели число
-    try:
-        quantity = float(message.text.replace(',', '.'))
-        if quantity <= 0:
-            raise ValueError
+    elif current_step == 'quantity':
+        # Проверяем, что ввели число
+        try:
+            quantity = float(message.text.replace(',', '.'))
+            if quantity <= 0:
+                raise ValueError
 
-        order_data['quantity'] = quantity
-        order_data['step'] = 'threads'  # ← НОВЫЙ ШАГ: ниточки
+            order_data['quantity'] = quantity
+            order_data['step'] = 'threads'  # ← НОВЫЙ ШАГ: ниточки
 
-        # Создаем кнопки для ниточек
-        markup_threads = types.InlineKeyboardMarkup()
-        btn_yes = types.InlineKeyboardButton('✅ Да, подобрать ниточки', callback_data='threads_yes')
-        btn_no = types.InlineKeyboardButton('❌ Нет, спасибо', callback_data='threads_no')
-        btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
-        markup_threads.add(btn_yes, btn_no)
-        markup_threads.add(btn_cancel)
+            # Создаем кнопки для ниточек
+            markup_threads = types.InlineKeyboardMarkup()
+            btn_yes = types.InlineKeyboardButton('✅ Да, подобрать ниточки', callback_data='threads_yes')
+            btn_no = types.InlineKeyboardButton('❌ Нет, спасибо', callback_data='threads_no')
+            btn_cancel = types.InlineKeyboardButton('❌ Отменить заказ', callback_data='cancel_order')
+            markup_threads.add(btn_yes, btn_no)
+            markup_threads.add(btn_cancel)
 
-        bot.send_message(
-            user_id,
-            f"🪡 **Шаг 4 из 7:** Хотите подобрать ниточки в тон?\n"
-            f"💰 Стоимость: 50 руб/катушка",
-            reply_markup=markup_threads,
-            parse_mode='Markdown'
-        )
+            bot.send_message(
+                user_id,
+                f"🪡 **Шаг 4 из 7:** Хотите подобрать ниточки в тон?\n"
+                f"💰 Стоимость: 50 руб/катушка",
+                reply_markup=markup_threads,
+                parse_mode='Markdown'
+            )
 
-    except ValueError:
-        bot.send_message(
-            user_id,
-            "❌ Пожалуйста, введите корректное число (например: 2.5 или 3):",
-            reply_markup=markup
-        )
-
+        except ValueError:
+            bot.send_message(
+                user_id,
+                "❌ Пожалуйста, введите корректное число (например: 2.5 или 3):",
+                reply_markup=markup
+            )
     elif current_step == 'fio':
         order_data['fio'] = message.text
         order_data['step'] = 'phone'
